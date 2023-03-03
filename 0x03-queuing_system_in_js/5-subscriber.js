@@ -1,25 +1,23 @@
-import redis from 'redis';
+#!/usr/bin/yarn dev
+import { createClient } from 'redis';
 
-const client = redis.createClient();
+const client = createClient();
+const EXIT_MSG = 'KILL_SERVER';
 
-client.on('connect', function () {
-  console.log('Redis client connected to the server');
+client.on('error', (err) => {
+  console.log('Redis client not connected to the server:', err.toString());
 });
 
-client.on('error', function (err) {
-  console.log('Redis client not connected to the server: ' + err.message);
+client.on('connect', () => {
+  console.log('Redis client connected to the server');
 });
 
 client.subscribe('holberton school channel');
 
-client.on('message', (channel, msg) => {
-  if (channel === 'holberton school channel') {
-    if (msg === 'KILL_SERVER') {
-      client.unsubscribe('holberton school channel');
-      console.log(msg)
-      client.quit();
-    }
-  } else {
-    console.log(msg);
+client.on('message', (_err, msg) => {
+  console.log(msg);
+  if (msg === EXIT_MSG) {
+    client.unsubscribe();
+    client.quit();
   }
 });
